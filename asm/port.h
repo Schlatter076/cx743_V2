@@ -100,7 +100,7 @@
 /************定义MCU I/O口 end*********************/
 /************定义MCU Flag标志位 start**************/
 #pragma global_register flag1:20 flag2:21 flag3:22 flagerr:23
-unsigned char flag1;
+volatile unsigned char flag1;
 #define keyprq_flag1     0	//有键按下标志位
 #define keyeff_flag1     1	//按键有效标志位
 #define Usart0_RECVFlag1 2 //=1表示串口0接收到了一个完整的数据包
@@ -110,7 +110,7 @@ unsigned char flag1;
 #define time_goFlag1     6
 #define recv_okFlag1     7
 
-unsigned char flag2;
+volatile unsigned char flag2;
 #define allowMotorFlag2 0 //允许动作电机标志位
 #define posi_RECVFlag2 1 //成功读取到电机位置值
 #define init_COMPFlag2 2 //初始化完成标志位
@@ -120,11 +120,11 @@ unsigned char flag2;
 #define is_NGFlag2 6 //NG复位回归点
 #define is_PASSFlag2 7 //测试完成回归中心位置
 
-unsigned char flag3;
+volatile unsigned char flag3;
 #define isRECFlag3 0
 #define isCOMPFlag3 1
 #define Z_BACKFlag3 2
-unsigned char flagerr;
+volatile unsigned char flagerr;
 
 
 /************定义MCU Flag标志位 end****************/

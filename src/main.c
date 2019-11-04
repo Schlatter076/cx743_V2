@@ -61,13 +61,13 @@ char *motor_reseting = "false"; //电机复位状态
 char *isStarted = "false"; //程序启动标志
 char *sendPos = "false"; //发送行程(脉冲当量)
 
-uchar Z_isConductive = FALSE; //导通标志位
-uchar X_isConductive = FALSE; //导通标志位
-uchar Y_isConductive = FALSE; //导通标志位
-uchar isDebug = FALSE; //调试标志
-uchar isDe_posi = FALSE; //调试走固定位置标志
-uchar isDe_reset = FALSE; //调试回原点标志
-uchar MOTOR_SPEED = 1; //电机运行速度(值越大，速度越慢)
+volatile uchar Z_isConductive = FALSE; //导通标志位
+volatile uchar X_isConductive = FALSE; //导通标志位
+volatile uchar Y_isConductive = FALSE; //导通标志位
+volatile uchar isDebug = FALSE; //调试标志
+volatile uchar isDe_posi = FALSE; //调试走固定位置标志
+volatile uchar isDe_reset = FALSE; //调试回原点标志
+volatile uchar MOTOR_SPEED = 1; //电机运行速度(值越大，速度越慢)
 uchar T_count = 0; //生效电机运行速度更改
 uchar step_counter = 0; //测试步数计数器
 #define RECORD_STEPS 1200
@@ -428,7 +428,7 @@ void send_start(void)
 #pragma interrupt_handler timer1_count_isr:15
 void timer1_count_isr(void)
 {
-    TCNT1 = 65536 - CRYSTAL / 8 / 2 * 0.00025; //重装0.0002s定时
+    TCNT1 = 65536 - CRYSTAL / 8 / 2 * 0.0002; //重装0.0002s定时
 
     //====急停或至少有一个电机到达限位处=====
     if(stopKey_clicked())
@@ -474,7 +474,7 @@ void timer1_count_isr(void)
             && (motor_reseting == "false") && ((flag2 & (1 << is_NGFlag2)) == 0) && ((flag2 & (1 << is_PASSFlag2)) == 0))  //拉力报警，减速电机
     {
         set_bit(flag2, Alarm_LIMITFlag2);
-        MOTOR_SPEED = 45; //减速电机
+        MOTOR_SPEED = 50; //减速电机
     }
     //========生效更改=====================================
     if(isStarted == "true" && ((flag2 & (1 << allowMotorFlag2)) != 0)) //程序运行中，允许电机走位
@@ -528,16 +528,19 @@ void timer1_count_isr(void)
                 Z_backward();
                 set_bit(flag3, isRECFlag3);
             }
+			Timer1_disable(); //不允许操作
             sendArrivals();
+			Timer1_enable();
             set_bit(flag2, motor_ARRIVALSFlag2);
-            clr_bit(flag2, motor_GOFlag2);
+            //clr_bit(flag2, motor_GOFlag2);
             MOTOR_SPEED = 30;
         }//*/
     }
     //=====执行按键按压操作=======
     if((flag2 & (1 << motor_ARRIVALSFlag2)) != 0)
     {
-        //==拉力计设定点2有效
+        clr_bit(flag2, motor_GOFlag2);
+		//==拉力计设定点2有效
 		if(Rally_P2_effictive())
 		{
 	        if(p2_count > KEY_COUNTER)
@@ -1431,7 +1434,9 @@ void main(void)
     //init_TIMER1_OVF();
 
     init_cpu();    //初始化CPU
+	delay_nms(100);
     mcu_reset();
+	delay_nms(100);
     while(1)
     {
         key_scan();
